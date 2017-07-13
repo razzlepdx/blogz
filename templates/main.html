@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{{mainheader}}</h1>
+    {% if blogs|length == 0 %}
+        <p>Sorry, no posts yet.  Click the link above if you'd like to add a post!</p>
+    {% endif %}
+    {% for blog in blogs %}
+        {% if mainheader == "Hi there - welcome to my blog!" %}
+            <h4> <a href="/blog?id={{ blog.id }}">{{ blog.title }}</a></h4>
+        {% endif %}
+        <p>{{ blog.body }}</p>
+        <hr>
+    {% endfor %}
+{% endblock %}
+
