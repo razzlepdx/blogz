@@ -35,24 +35,31 @@ def index():
 
 @app.route('/newpost', methods = ['GET', 'POST'])
 def new_post():
+
     if request.method == 'POST':
+
         blog_title = request.form['title']
         blog_content = request.form['blogpost']  
+        
         # new post error validation starts here - both fields on form must be filled in
+
         if blog_title == '' or blog_content == '':
             if blog_title == '':
                 flash("Please enter a title for this blog post!")
             if blog_content == '':
-                flash("Please add content to the body of your post!", "error")
+                flash("Please add content to the body of your post!")
             # return new post template with error messages 
             return render_template('newpost.html', pagetitle="Add a Blog Post", title = blog_title, blogpost = blog_content)
+        
         # if no errors, then assign information and update db
         new_post = Blog(blog_title, blog_content)
         db.session.add(new_post)
         db.session.commit()  
-        # after db update, redirect user to main page
+        
+        # after db update, redirect user to main page, but display only the newly created post
         return redirect('/blog?id=' + str(new_post.id))
-    # render an empty new post template in the case of a get request    
+
+    # in the case of a get request, render an empty new post template     
     return render_template('newpost.html', pagetitle = "Add a Blog Post")  
 
 

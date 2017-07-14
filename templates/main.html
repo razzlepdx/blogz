@@ -2,15 +2,21 @@
 
 {% block content %}
     <h1>{{mainheader}}</h1>
+    <!-- check for blog posts -->
     {% if blogs|length == 0 %}
         <p>Sorry, no posts yet.  Click the link above if you'd like to add a post!</p>
     {% endif %}
+
     {% for blog in blogs %}
+        <!-- displays blog post title as an h4 only if user is viewing the main page without any id query params -->
         {% if mainheader == "Hi there - welcome to my blog!" %}
             <h4> <a href="/blog?id={{ blog.id }}">{{ blog.title }}</a></h4>
         {% endif %}
+
         <p>{{ blog.body }}</p>
+
         <hr>
+        
     {% endfor %}
 {% endblock %}
 
