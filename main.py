@@ -21,7 +21,7 @@ class Blog(db.Model):
         self.body = body
         self.author = author
     
-    # TODO - add Blog helper functions to /newpost
+    # TODO - use Blog helper functions instead of validating in /newpost
     # def has_content(self):
     #     if self.title and self.content:
     #         return True
@@ -38,58 +38,72 @@ class User(db.Model):
     def __init__(self, username, password):
         self.username = username
         self.password = password
-        
-
-
-
-# TODO:
-# - add 3 new templates: *signup.html, *login.html, **index.html
-# - add singleUser.html to display only blogs associated with a particular author
-# - add logout function that: a) handles a post request to /logout, b) redirects user to /blog after deleting username from session
-
 
 # requires user to login for particular routes
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'index', 'signup']
-    print(session)
+    allowed_routes = ['login', 'index', 'signup', 'blogs']
     if request.endpoint not in allowed_routes and 'username' not in session:
         return redirect('/login')
 
-@app.route("/blog", methods=['GET'])
+@app.route("/", methods=['GET'])
 def index():
-    # check for query parameters, indicating a single post needs to be displayed
-    # assign any id params to a variable
+    '''displays all current bloggers with links to their posts'''
+    authors = User.query.all()
+    return render_template('index.html', mainheader = "Blogz", authors = authors)
+    
+@app.route("/blog", methods=['GET'])
+def blogs():
+    ''' displays all/some/single blog posts based on query parameters received '''
+    # check for query parameters, indicating that filtered posts need to be displayed
+    # assign any query params to a variable
+
     blog_id = request.args.get('id')
+    author_id = request.args.get('user')
+    author_name = request.args.get('username')
+
+    # id param means that single post will be displayed
     if blog_id:
         single_post = Blog.query.filter_by(id = blog_id).all()
         #render blog template with contents of the single post only
-        return render_template('main.html', pagetitle ="Blog Posts", mainheader = single_post[0].title, blogs = single_post)
-
+        return render_template('main.html', pagetitle ="Blog Posts", mainheader = "Blogz", blogs = single_post)
+    
+    #author id means that all posts by a specific author will be displayed
+    if author_id:
+        author_posts = Blog.query.filter_by(author_id = author_id).all()
+        author_header = "Blog Posts by " + author_name
+        return render_template('main.html', pagetitle="Blog Posts", mainheader = author_header, blogs=author_posts)
+    
     # otherwise, display all blog posts    
     blogs = Blog.query.all()
-    mainheader = "Hi there - welcome to my blog!"
+    mainheader = "Hi there - welcome to Blogz!"
     return render_template('main.html', pagetitle = "Blog Posts", mainheader = mainheader, blogs = blogs)
 
 @app.route("/login", methods=['GET','POST'])
 def login():
-    #TODO - check that validation is working
+    ''' displays login form and verifies that user data matches db records '''
     if request.method == 'POST':
-        print("This function is running!")
         username = request.form['username']
         password = request.form['password']
         user_login = User.query.filter_by(username=username).first()
         # check for existing username and password, then redirect to /newpost
         if user_login and user_login.password == password:
             session['username'] = username
+            flash('You are now logged in', 'ok_to_go')
             return redirect('/newpost')
         # otherwise, display error message    
-        # flash('The username or password you entered did not match our system, please try again', 'error')
-        print('error!')
+        flash('The username or password you entered did not match our system, please try again', 'error')
     return render_template('login.html')
 
+@app.route("/logout", methods=['GET'])
+def logout():
+    ''' removes username from session and redirects user to main blog page '''
+    del session['username']
+    flash('You have been logged out', 'ok_to_go')
+    return redirect('/blog')
 @app.route('/signup', methods=['GET','POST'])
 def signup():
+    ''' displays signup form and validates user input before creating a new db record '''
     if request.method == 'POST':
         # user inputs submitted through the signup form
         username = request.form['username']
@@ -103,19 +117,19 @@ def signup():
 
         # Validate the information submitted and generate error messages
         if username == '' or password == '' or verify == '':
-            # flash('Sorry, one or more fields are invalid.  A username, password, and password verification are required.', 'error')
+            flash('Sorry, one or more fields are invalid.  A username, password, and password verification are required.', 'error')
             total_errors += 1
         if valid_input(username) == False:
-            # flash('Sorry, that username won\'t work!  Please enter a username between 3 and 40 characters, with no spaces.', 'error')
+            flash('Sorry, that username won\'t work!  Please enter a username between 3 and 40 characters, with no spaces.', 'error')
             total_errors += 1
         if valid_input(password) == False:
-            # flash('Sorry, that password won\'t work!  Please enter a password between 3 and 40 characters, with no spaces.', 'error')
+            flash('Sorry, that password won\'t work!  Please enter a password between 3 and 40 characters, with no spaces.', 'error')
             total_errors += 1    
         if verify_pass(password, verify) == False:
-            # flash('These passwords don\'t match!  Please enter your passwords again.', 'error')
+            flash('These passwords don\'t match!  Please enter your passwords again.', 'error')
             total_errors += 1
         if existing_user:
-            # flash('This username is already taken. If you would like to sign in as this user, click <a href=\'/login\'>here.</a>', 'error')
+            flash('This username is already taken. If you would like to sign in as this user, click <a href=\'/login\'>here.</a>', 'error')
             total_errors += 1
         
         # if error messages are generated, re-render the signup form to display messages
@@ -129,7 +143,7 @@ def signup():
             db.session.commit()
 
             # add username to session and redirect to /newpost
-            session['username']= username
+            session['username'] = username
             return redirect('/newpost')
 
 
@@ -137,7 +151,7 @@ def signup():
 
 @app.route('/newpost', methods = ['GET', 'POST'])
 def new_post():
-
+    ''' displays a form to create and submit a new blog post '''
     if request.method == 'POST':
 
         blog_title = request.form['title']

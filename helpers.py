@@ -1,6 +1,6 @@
 def valid_input(input):
     ''' validates all user inputs and returns True/False based on requirements met '''
-    if len(input) < 3 or len(input) > 40:
+    if len(input) < 0 and (len(input) < 3 or len(input) > 40):
         return False
     for c in input:
         if c == " ":
