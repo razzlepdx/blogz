@@ -4,19 +4,25 @@
         <title>{{pagetitle}}</title>
     </head>
     <body>
-        <a href="/blog">Main Blog Page</a> 
-        <a href="/newpost">Add a Blog Entry</a>
-        <a href="/signup">Create Account</a>
-            {% block content %}
-            {% endblock %}
-        
-            {% with messages = get_flashed_messages() %}
+        <header>
+            <a href="/blog">Main Blog Page</a> 
+            <a href="/newpost">Add a Blog Entry</a>
+            <a href="/login">Login</a>
+            <a href="/logout"> Logout</a>
+            <a href="/signup">Create Account</a>
+        </header>
+        <main>
+            {% with messages = get_flashed_messages(with_categories=True) %}
                 <ul>
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
+                    {% for category, message in messages %}
+                        <li class='{{category}}'>{{ message }}</li>
                     {% endfor %}
                 </ul>
             {% endwith %}
-
+            
+            {% block content %}
+            
+            {% endblock %}
+        </main>
     </body>
 </html>
